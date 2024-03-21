@@ -1,0 +1,52 @@
+version: '3.8'
+networks:
+  backnet:
+  frontnet:
+services:
+  mariadb:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_DATABASE: "madb"
+      MYSQL_USER: your_username
+      MYSQL_PASSWORD: your_password
+    volumes:
+      - /var/lib/mysql:/var/lib/mysql
+    networks:
+      - backnet
+    expose:
+      - 3306
+
+  php:
+    build: .
+    restart: always
+    networks:
+      - backnet
+      - frontnet
+    expose:
+      - 80
+
+  caddy:
+    image: caddy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - frontnet
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./app:/var/www/html
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: "1234"
+    networks:
+      - backnet
+    expose:
+      - 8080
